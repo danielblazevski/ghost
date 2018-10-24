@@ -1,0 +1,38 @@
+# allows to run a bunch servers locally
+version: '3'
+services:
+  chain1_head:
+    build: .
+    links:
+      - "chain1_replica11:chain1_replica1"
+    ports:
+      - "8080:8080"
+    command: /go/bin/main-server 8080
+  chain1_replica1:
+    build: .
+    links:
+      - "chain1_tail:chain1_tail"
+    ports:
+      - "8081:8081"
+    command: /go/bin/main-server 8081
+  chain1_tail:
+    build: .
+    links:
+      - "chain1_replica1:chain1_replica1"
+    ports:
+      - "8082:8082"
+    command: /go/bin/main-server 8082
+
+  gateway:
+    build: .
+    links:
+      - "chain1_head:chain1_server1"
+      - "chain1_replica1:chain1_replica1"
+      - "chain1_tail:chain1_tail"
+      - "chain2_head:chain2_head"
+      - "chain2_replica1:chain2_replica1"
+      - "chain2_tail:chain2_tail"
+    ports:
+      - "8090:8090"
+    command: /go/bin/gateway-server 8090
+

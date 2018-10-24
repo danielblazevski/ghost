@@ -1,0 +1,22 @@
+version: '3'
+services:
+server1:
+  build: 
+    context: .
+  ports:
+  - "8080:8080"
+  command: /go/bin/main-server 8080
+server2:
+    build:
+      context: .
+    ports:
+      - "8081:8081"
+    command: /go/bin/main-server 8081
+
+  gateway:
+    build: .
+      context: .
+    ports:
+      - "8090:8090"
+    command: /go/bin/gateway-server 8090
+

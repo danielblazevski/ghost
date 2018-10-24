@@ -1,0 +1,21 @@
+to-do list:
+
+(1) 
+need to rename server1, server2 and have incorporate chain in namespacing of servers chain-i-server-j
+
+or... chain-i-head, chain-i-rep1, chain-i-rep2, chain-i-tail
+
+(1.5) change all port in containers to be 8080
+
+(2)
+Need to replicate more than once.  Might need some notion of a tail node?  
+
+(3)
+Need to add better load balancing than round-robin.  And ping multiple nodes at once and do a system call to check resources
+
+(4) 
+Made a simple UI using React
+
+(5) 
+Need to add in fault tolerance, e.g. detect if a node dies.
+
