@@ -10,6 +10,7 @@ import (
 
 type StubClientSuccess struct{}
 
+// NEED TO REDO
 func (sc StubClientSuccess) Do(req *http.Request) (*http.Response, error) {
 	return &http.Response{}, nil
 }

@@ -7,6 +7,7 @@ import (
 	"testing"
 )
 
+//// NEED TO RE-DO
 func TestToLocalGoodScenario(t *testing.T) {
 
 	request := httptest.NewRequest("GET", "http://localhost:8080/download", nil)
