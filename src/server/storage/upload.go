@@ -12,7 +12,7 @@ import (
 
 // each node will still have <download> and <upload> routes only.
 
-const baseLocation = "/ghost/files/"
+const baseLocation = "/ghost/files"
 
 type NextClient interface {
 	Do(req *http.Request) (*http.Response, error)
