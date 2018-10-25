@@ -38,8 +38,7 @@ func cpLocalToRemote(local string, remote string) error {
 	client1 := &http.Client{}
 	fmt.Println(local)
 
-	// hits a "gateway" server to determine which server to upload to
-	// TO-DO: Change name of "gateway"
+	// hits a "entrypoint" server to determine which server to upload to
 	req1, _ := http.NewRequest("GET", "http://localhost:8090/upload", nil)
 	q1 := req1.URL.Query()
 	q1.Add("file", strings.Replace(remote, prefix, "", -1))

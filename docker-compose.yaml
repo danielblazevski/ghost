@@ -40,7 +40,7 @@ services:
       - "8085:8085"
     command: /go/ghost/bin/main-server 8085 none none
 
-  gateway:
+  entrypoint:
     build: .
     links:
       - "chain1_head:chain1_server1"
@@ -51,5 +51,5 @@ services:
       - "chain2_tail:chain2_tail"
     ports:
       - "8090:8090"
-    command: /go/ghost/bin/gateway-server 8090
+    command: /go/ghost/bin/entrypoint-server 8090
 

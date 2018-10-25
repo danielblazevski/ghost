@@ -1,4 +1,4 @@
-package gateway
+package entrypoint
 
 const num_chains = 2
 const nodes_per_chain = 3
@@ -12,7 +12,7 @@ type Chain struct {
 	nodes []Node
 }
 
-// global variable with all the chains.  gateway server wil randomly pick a chain head for uploads
+// global variable with all the chains.  entrypoint server wil randomly pick a chain head for uploads
 // Pick a random node for download within a chain?
 var chains = [num_chains]Chain{Chain{[]Node{Node{Host: "chain1_head", Port: 8080},
 	Node{Host: "chain1_replica1", Port: 8081},

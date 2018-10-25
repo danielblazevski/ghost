@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"server/gateway"
+	"server/entrypoint"
 )
 
 var storage_nodes_client = &http.Client{}
@@ -12,9 +12,9 @@ var storage_nodes_client = &http.Client{}
 func main() {
 	port := os.Args[1]
 	fmt.Println("Starting http file sever")
-	http.HandleFunc("/upload", gateway.HandleUpload)
+	http.HandleFunc("/upload", entrypoint.HandleUpload)
 
-	http.HandleFunc("/download", gateway.HandleDownload)
+	http.HandleFunc("/download", entrypoint.HandleDownload)
 
 	err := http.ListenAndServe(fmt.Sprintf(":%s", port), nil)
 	if err != nil {
