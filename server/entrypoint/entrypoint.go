@@ -1,17 +1,16 @@
 package entrypoint
 
 import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"log"
 	"math"
-	"net/http"
-	"strconv"
 )
 
 func some_super_cool_hash(s string) int {
 	return int(math.Mod(float64(len(s)), float64(num_chains)))
+}
+
+type Node struct {
+	Host string
+	Port int
 }
 
 type NodeStat struct {
@@ -19,75 +18,19 @@ type NodeStat struct {
 	Stat int
 }
 
-type Status struct {
-	NumGoRoutines int
+type Chain struct {
+	nodes []Node
 }
 
-// these return node for client to ping
-func HandleDownload(writer http.ResponseWriter, request *http.Request) {
-	filename := request.URL.Query().Get("file")
-	if filename == "" {
-		http.Error(writer, "Get 'file' not specified in url.", 400)
-		return
-	}
+const num_chains = 2
+const nodes_per_chain = 3
 
-	log.Println("Client requests to download: " + filename)
-	chainIndex := some_super_cool_hash(filename)
-	nodes := chains[chainIndex].nodes
+// global variable with all the chains.  entrypoint server wil randomly pick a chain head for uploads
+// Pick a random node for download within a chain?
+var chains = [num_chains]Chain{Chain{[]Node{Node{Host: "chain1_head", Port: 8080},
+	Node{Host: "chain1_replica1", Port: 8081},
+	Node{Host: "chain1_tail", Port: 8082}}},
 
-	// ping each node in parallel and choose which one
-	c := make(chan int)
-	for _, node := range nodes {
-		go getStats(node, c)
-	}
-
-	nodeStats := make(map[Node]int, len(nodes))
-	for _, node := range nodes {
-		stat := <-c
-		nodeStats[node] = stat
-	}
-	// get min node
-	var minStat = 10000000
-	var minNode = nodes[0]
-	for node, stat := range nodeStats {
-		if stat < minStat {
-			minStat = stat
-			minNode = node
-		}
-	}
-
-	js, err := json.Marshal(minNode)
-	if err != nil {
-		http.Error(writer, "could not form json response", 500)
-	}
-	writer.Header().Set("Content-Type", "application/json")
-	writer.Write(js)
-}
-
-func getStats(node Node, c chan int) {
-	client := &http.Client{}
-	reqStatus, _ := http.NewRequest("GET", fmt.Sprintf("http://%s:%s/status-check", node.Host, strconv.Itoa(node.Port)), nil)
-	respStatusCheck, _ := client.Do(reqStatus)
-	var data Status
-	body, _ := ioutil.ReadAll(respStatusCheck.Body)
-	json.Unmarshal(body, &data)
-	c <- data.NumGoRoutines
-}
-
-func HandleUpload(writer http.ResponseWriter, request *http.Request) {
-	filename := request.URL.Query().Get("file")
-	if filename == "" {
-		http.Error(writer, "Get 'file' not specified in url.", 400)
-		return
-	}
-	log.Println("Client request to upload: " + filename)
-	chainIndex := some_super_cool_hash(filename)
-	nodes := chains[chainIndex].nodes
-	node := nodes[0]
-	js, err := json.Marshal(node)
-	if err != nil {
-		http.Error(writer, "could not form json response", 500)
-	}
-	writer.Header().Set("Content-Type", "application/json")
-	writer.Write(js)
-}
+	Chain{[]Node{Node{Host: "chain2_head", Port: 8083},
+		Node{Host: "chain2_replica1", Port: 8084},
+		Node{Host: "chain2_tail", Port: 8085}}}}
