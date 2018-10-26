@@ -22,6 +22,7 @@ func main() {
 	})
 
 	http.HandleFunc("/download", storage.HandleDownloadStorage)
+	http.HandleFunc("/status-check", storage.HandleStatusCheck)
 
 	err := http.ListenAndServe(fmt.Sprintf(":%s", port), nil)
 	if err != nil {
