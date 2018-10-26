@@ -2,7 +2,7 @@ package entrypoint
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"math"
 	"net/http"
 )
@@ -21,17 +21,12 @@ func HandleDownload(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	fmt.Println("Client requests: " + filename)
+	log.Println("Client requests to download: " + filename)
 	chainIndex := some_super_cool_hash(filename)
 	nodes := chains[chainIndex].nodes
 	roundRobin = int(math.Mod(float64(roundRobin+1), float64(len(nodes))))
-	fmt.Println(roundRobin)
 	node := nodes[roundRobin]
-	fmt.Println(node.Host)
-	fmt.Println(node.Port)
-	fmt.Println(node)
 	js, err := json.Marshal(node)
-	fmt.Println(js)
 	if err != nil {
 		http.Error(writer, "could not form json response", 500)
 	}
@@ -45,7 +40,7 @@ func HandleUpload(writer http.ResponseWriter, request *http.Request) {
 		http.Error(writer, "Get 'file' not specified in url.", 400)
 		return
 	}
-	fmt.Println("Client requests: " + filename)
+	log.Println("Client request to upload: " + filename)
 	chainIndex := some_super_cool_hash(filename)
 	nodes := chains[chainIndex].nodes
 	node := nodes[0]

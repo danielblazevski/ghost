@@ -10,10 +10,6 @@ import (
 	"util"
 )
 
-// each node will still have <download> and <upload> routes only.
-
-const baseLocation = "/ghost/files"
-
 type NextClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
@@ -24,12 +20,15 @@ func HandleUploadStorage(writer http.ResponseWriter,
 	nextService string,
 	nextPort string) {
 
+	baseLocation := "/ghost/files"
 	query := request.URL.Query()
 	dest := query.Get("dest")
 
 	if dest == "" {
 		http.Error(writer, "Post 'file' not specified in url", 400)
 	}
+
+	log.Println("upload request to: " + dest)
 
 	fileMainPath := fmt.Sprintf("%s/%s", baseLocation, dest)
 	versionPtr, err := util.GetVersionedFile(writer, fileMainPath)
@@ -38,7 +37,7 @@ func HandleUploadStorage(writer http.ResponseWriter,
 		http.Error(writer, "Could not fetch version.", 500)
 		return
 	}
-	version := *versionPtr
+	version := *versionPtr + 1
 
 	file, err := os.Create(fmt.Sprintf("%s/#%s", fileMainPath, strconv.Itoa(version)))
 	if err != nil {
@@ -64,18 +63,11 @@ func HandleUploadStorage(writer http.ResponseWriter,
 		return
 	}
 
-	fileHeader := make([]byte, 512)
-	file.Read(fileHeader)
-	fileContentType := http.DetectContentType(fileHeader)
-
-	fileStat, _ := file.Stat()
-	fileSize := strconv.FormatInt(fileStat.Size(), 10)
-
 	req, _ := http.NewRequest("POST", fmt.Sprintf("http://%s:%s/upload", nextService, nextPort), file)
 	q := req.URL.Query()
 	q.Add("dest", dest)
 	req.URL.RawQuery = q.Encode()
-	//Send the headers
+	fileContentType, fileSize := util.GetHeaderInfo(file)
 	req.Header.Set("Content-Disposition", "attachment; filename="+dest)
 	req.Header.Set("Content-Type", fileContentType)
 	req.Header.Set("Content-Length", fileSize)

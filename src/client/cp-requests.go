@@ -9,8 +9,8 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
+	"util"
 )
 
 const prefix = "doge://"
@@ -34,50 +34,38 @@ func Cp(from string, to string) error {
 }
 
 func cpLocalToRemote(local string, remote string) error {
+	log.Printf("copy local file %s to remote %s", local, remote)
 	// first figure out which node to hit
 	client1 := &http.Client{}
-	fmt.Println(local)
 
 	// hits a "entrypoint" server to determine which server to upload to
-	req1, _ := http.NewRequest("GET", "http://localhost:8090/upload", nil)
-	q1 := req1.URL.Query()
-	q1.Add("file", strings.Replace(remote, prefix, "", -1))
-	req1.URL.RawQuery = q1.Encode()
-	resp1, _ := client1.Do(req1)
+	reqEntryPoint, _ := http.NewRequest("GET", "http://localhost:8090/upload", nil)
+	queryEntryPoint := reqEntryPoint.URL.Query()
+	queryEntryPoint.Add("file", strings.Replace(remote, prefix, "", -1))
+	reqEntryPoint.URL.RawQuery = queryEntryPoint.Encode()
+	respEntryPoint, _ := client1.Do(reqEntryPoint)
 	var data Node
-	body, _ := ioutil.ReadAll(resp1.Body)
+	body, _ := ioutil.ReadAll(respEntryPoint.Body)
 	json.Unmarshal(body, &data)
 
 	localFile, err := os.Open(local)
+	defer localFile.Close()
 	if err != nil {
 		return err
 	}
-	fmt.Println(data)
-	//Get the Content-Type of the file
-	//Create a buffer to store the header of the file in
-	fileHeader := make([]byte, 512)
-	//Copy the headers into the fileHeader buffer
-	localFile.Read(fileHeader)
-	//Get content type of file
-	fileContentType := http.DetectContentType(fileHeader)
 
-	//Get the file size
-	fileStat, _ := localFile.Stat()                    //Get info from file
-	fileSize := strconv.FormatInt(fileStat.Size(), 10) //Get file size as a string
-
+	// upload to node obtained from entrypoint.
 	client := &http.Client{}
+	reqStroage, _ := http.NewRequest("POST", fmt.Sprintf("http://localhost:%d/upload", data.Port), localFile)
+	queryStorage := reqStroage.URL.Query()
+	queryStorage.Add("dest", strings.Replace(remote, prefix, "", -1))
+	reqStroage.URL.RawQuery = queryStorage.Encode()
 
-	req, _ := http.NewRequest("POST", fmt.Sprintf("http://localhost:%d/upload", data.Port), localFile)
-	q := req.URL.Query()
-	q.Add("dest", strings.Replace(remote, prefix, "", -1))
-	q.Add("next", "8081")
-	req.URL.RawQuery = q.Encode()
-	//Send the headers
-	req.Header.Set("Content-Disposition", "attachment; local="+local)
-	req.Header.Set("Content-Type", fileContentType)
-	req.Header.Set("Content-Length", fileSize)
-	localFile.Seek(0, 0)
-	resp, err := client.Do(req)
+	fileContentType, fileSize := util.GetHeaderInfo(localFile)
+	reqStroage.Header.Set("Content-Disposition", "attachment; local="+local)
+	reqStroage.Header.Set("Content-Type", fileContentType)
+	reqStroage.Header.Set("Content-Length", fileSize)
+	resp, err := client.Do(reqStroage)
 	log.Println(resp)
 	if err != nil {
 		return err
@@ -85,23 +73,25 @@ func cpLocalToRemote(local string, remote string) error {
 	return nil
 }
 
-func cpRemoteToLocal(local string, remote string) error {
+func cpRemoteToLocal(remote string, local string) error {
+	log.Printf("copy remote file %s to local %s", local, remote)
+
 	// first figure out which node to hit
 	client1 := &http.Client{}
-	req1, _ := http.NewRequest("GET", "http://localhost:8090/download", nil)
-	q1 := req1.URL.Query()
-	q1.Add("file", strings.Replace(remote, prefix, "", -1))
-	req1.URL.RawQuery = q1.Encode()
-	resp1, _ := client1.Do(req1)
+	reqEntryPoint, _ := http.NewRequest("GET", "http://localhost:8090/download", nil)
+	queryEntryPoint := reqEntryPoint.URL.Query()
+	queryEntryPoint.Add("file", strings.Replace(remote, prefix, "", -1))
+	reqEntryPoint.URL.RawQuery = queryEntryPoint.Encode()
+	respEntryPoint, _ := client1.Do(reqEntryPoint)
 	var data Node
-	body, _ := ioutil.ReadAll(resp1.Body)
+	body, _ := ioutil.ReadAll(respEntryPoint.Body)
 	json.Unmarshal(body, &data)
 
 	// now hit that node
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", fmt.Sprintf("http://localhost:%d/download", data.Port), nil)
 	q := req.URL.Query()
-	q.Add("file", remote)
+	q.Add("file", strings.Replace(remote, prefix, "", -1))
 	req.URL.RawQuery = q.Encode()
 
 	resp, err := client.Do(req)
@@ -118,6 +108,7 @@ func cpRemoteToLocal(local string, remote string) error {
 
 	f, err := os.Create(local)
 	if err != nil {
+		log.Println("could not create local file!")
 		return err
 	}
 	buf := make([]byte, 512000)

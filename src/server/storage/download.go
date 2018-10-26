@@ -3,13 +3,16 @@ package storage
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
+	"util"
 )
 
-// TO-DO: grab latst version!
 func HandleDownloadStorage(writer http.ResponseWriter, request *http.Request) {
+	baseLocation := "/ghost/files"
+
 	//First of check if Get is set in the URL
 	filename := request.URL.Query().Get("file")
 	if filename == "" {
@@ -17,23 +20,28 @@ func HandleDownloadStorage(writer http.ResponseWriter, request *http.Request) {
 		http.Error(writer, "Get 'file' not specified in url.", 400)
 		return
 	}
-	fmt.Println("Client requests: " + filename)
+	log.Println("Download request: " + filename)
+	mainPath := fmt.Sprintf("%s/%s", baseLocation, filename)
 
-	file, err := os.Open(filename)
+	versionPtr, err := util.GetVersionedFile(writer, mainPath)
+	if err != nil {
+		log.Println("Could not create new file")
+		http.Error(writer, "Could not fetch version.", 500)
+		return
+	}
+	version := *versionPtr
+	versionedFile := fmt.Sprintf("%s/#%s", mainPath, strconv.Itoa(version))
+
+	file, err := os.Open(versionedFile)
 	defer file.Close()
 	if err != nil {
 		//File not found, send 404
+		log.Printf("could not open file %s", versionedFile)
 		http.Error(writer, "File not found.", 404)
 		return
 	}
 
-	fileHeader := make([]byte, 512)
-	file.Read(fileHeader)
-	fileContentType := http.DetectContentType(fileHeader)
-
-	fileStat, _ := file.Stat()
-	fileSize := strconv.FormatInt(fileStat.Size(), 10)
-
+	fileContentType, fileSize := util.GetHeaderInfo(file)
 	writer.Header().Set("Content-Disposition", "attachment; filename="+filename)
 	writer.Header().Set("Content-Type", fileContentType)
 	writer.Header().Set("Content-Length", fileSize)

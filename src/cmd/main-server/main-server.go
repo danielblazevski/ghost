@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"server/storage"
@@ -14,7 +15,7 @@ func main() {
 	nextService := os.Args[2]
 	nextPort := os.Args[3]
 
-	fmt.Println("Starting http file sever")
+	log.Println("Starting http file sever")
 
 	http.HandleFunc("/upload", func(w http.ResponseWriter, r *http.Request) {
 		storage.HandleUploadStorage(w, r, nextNodeClient, nextService, nextPort)
@@ -24,6 +25,6 @@ func main() {
 
 	err := http.ListenAndServe(fmt.Sprintf(":%s", port), nil)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 }

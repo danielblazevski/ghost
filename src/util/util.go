@@ -1,7 +1,6 @@
 package util
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -10,9 +9,23 @@ import (
 	"strings"
 )
 
+func GetHeaderInfo(file *os.File) (string, string) {
+	//Get the Content-Type of the file
+	//Create a buffer to store the header of the file in
+	fileHeader := make([]byte, 512)
+	//Copy the headers into the fileHeader buffer
+	file.Read(fileHeader)
+	//Get content type of file
+	fileContentType := http.DetectContentType(fileHeader)
+	//Get the file size
+	fileStat, _ := file.Stat()                         //Get info from file
+	fileSize := strconv.FormatInt(fileStat.Size(), 10) //Get file size as a string
+	file.Seek(0, 0)
+	return fileContentType, fileSize
+}
+
 func GetVersionedFile(writer http.ResponseWriter, fileMainPath string) (*int, error) {
 	// check if file exists -- really just check if directory exists
-	//fileMainPath := fmt.Sprintf("%s/%s", baseLocation, dest)
 	exists, err := exists(fileMainPath)
 	if err != nil {
 		return nil, err
@@ -28,7 +41,7 @@ func GetVersionedFile(writer http.ResponseWriter, fileMainPath string) (*int, er
 		latestfile := files[len(files)-1]
 		splitted := strings.Split(latestfile.Name(), "#")
 		currentVersion, _ := strconv.Atoi(splitted[len(splitted)-1])
-		version = currentVersion + 1
+		version = currentVersion
 	} else {
 		err := os.MkdirAll(fileMainPath, 0777)
 		if err != nil {
@@ -36,11 +49,9 @@ func GetVersionedFile(writer http.ResponseWriter, fileMainPath string) (*int, er
 			http.Error(writer, "Could not write new directory", 500)
 			return nil, err
 		}
-		version = 1
+		version = 0
 	}
-	fmt.Println(fmt.Sprintf("%s/%s", fileMainPath, strconv.Itoa(version)))
 	return &version, nil
-	//return os.Create(fmt.Sprintf("%s/%s", fileMainPath, strconv.Itoa(version)))
 }
 
 func exists(path string) (bool, error) {

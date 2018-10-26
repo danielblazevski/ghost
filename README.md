@@ -8,8 +8,9 @@ To run
 go install ./src/cmd/...
 docker-compose up
 ```
-to upload a file
+to upload or download a file
 ```
-./bin/cp cp foo.txt doge://cloud/bar.txt
+./bin/cp foo.txt doge://cloud/bar.txt
+./bin/cp doge://cloud/bar.txt foobar.txt
 ```
 (yes, `doge` is the official protocol for ghost)
