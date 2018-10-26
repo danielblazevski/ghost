@@ -7,38 +7,38 @@ services:
       - "chain1_replica1:chain1_replica1"
     ports:
       - "8080:8080"
-    command: /go/ghost/bin/main-server 8080 chain1_replica1 8081
+    command: /go/bin/main-server 8080 chain1_replica1 8081
   chain1_replica1:
     build: .
     links:
       - "chain1_tail:chain1_tail"
     ports:
       - "8081:8081"
-    command: /go/ghost/bin/main-server 8081 chain1_tail 8082
+    command: /go/bin/main-server 8081 chain1_tail 8082
   chain1_tail:
     build: .
     ports:
       - "8082:8082"
-    command: /go/ghost/bin/main-server 8082 none none
+    command: /go/bin/main-server 8082 none none
   chain2_head:
     build: .
     links:
       - "chain2_replica1:chain2_replica1"
     ports:
       - "8083:8083"
-    command: /go/ghost/bin/main-server 8083 chain2_replica1 8084
+    command: /go/bin/main-server 8083 chain2_replica1 8084
   chain2_replica1:
     build: .
     links:
       - "chain2_tail:chain2_tail"
     ports:
       - "8084:8084"
-    command: /go/ghost/bin/main-server 8084 chain2_tail 8085
+    command: /go/bin/main-server 8084 chain2_tail 8085
   chain2_tail:
     build: .
     ports:
       - "8085:8085"
-    command: /go/ghost/bin/main-server 8085 none none
+    command: /go/bin/main-server 8085 none none
 
   entrypoint:
     build: .
@@ -51,5 +51,5 @@ services:
       - "chain2_tail:chain2_tail"
     ports:
       - "8090:8090"
-    command: /go/ghost/bin/entrypoint-server 8090
+    command: /go/bin/entrypoint-server 8090
 

@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
+	"ghost/server/storage"
 	"log"
 	"net/http"
 	"os"
-	"server/storage"
 )
 
 var nextNodeClient = &http.Client{}

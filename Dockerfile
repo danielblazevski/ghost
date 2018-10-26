@@ -1,9 +1,7 @@
 From golang:1.8
 
-ENV GOPATH=/go/ghost
-RUN mkdir -p /base/
+RUN mkdir -p $GOPATH/src/ghost
 
-WORKDIR $GOPATH
-ADD . $GOPATH
-RUN  go install ./src/cmd/...
-#CMD ["bash"]
+WORKDIR $GOPATH/src/ghost
+ADD . $GOPATH/src/ghost
+RUN  go install ./cmd/...

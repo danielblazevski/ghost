@@ -2,12 +2,12 @@ package storage
 
 import (
 	"fmt"
+	"ghost/util"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
-	"util"
 )
 
 func HandleDownloadStorage(writer http.ResponseWriter, request *http.Request) {
