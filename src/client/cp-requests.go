@@ -36,17 +36,11 @@ func Cp(from string, to string) error {
 func cpLocalToRemote(local string, remote string) error {
 	log.Printf("copy local file %s to remote %s", local, remote)
 	// first figure out which node to hit
-	client1 := &http.Client{}
+	clientEntrypoint := &http.Client{}
 
 	// hits a "entrypoint" server to determine which server to upload to
 	reqEntryPoint, _ := http.NewRequest("GET", "http://localhost:8090/upload", nil)
-	queryEntryPoint := reqEntryPoint.URL.Query()
-	queryEntryPoint.Add("file", strings.Replace(remote, prefix, "", -1))
-	reqEntryPoint.URL.RawQuery = queryEntryPoint.Encode()
-	respEntryPoint, _ := client1.Do(reqEntryPoint)
-	var data Node
-	body, _ := ioutil.ReadAll(respEntryPoint.Body)
-	json.Unmarshal(body, &data)
+	data := makeRequestEntrypoint(clientEntrypoint, reqEntryPoint, remote)
 
 	localFile, err := os.Open(local)
 	defer localFile.Close()
@@ -77,15 +71,9 @@ func cpRemoteToLocal(remote string, local string) error {
 	log.Printf("copy remote file %s to local %s", local, remote)
 
 	// first figure out which node to hit
-	client1 := &http.Client{}
+	clientEntrypoint := &http.Client{}
 	reqEntryPoint, _ := http.NewRequest("GET", "http://localhost:8090/download", nil)
-	queryEntryPoint := reqEntryPoint.URL.Query()
-	queryEntryPoint.Add("file", strings.Replace(remote, prefix, "", -1))
-	reqEntryPoint.URL.RawQuery = queryEntryPoint.Encode()
-	respEntryPoint, _ := client1.Do(reqEntryPoint)
-	var data Node
-	body, _ := ioutil.ReadAll(respEntryPoint.Body)
-	json.Unmarshal(body, &data)
+	data := makeRequestEntrypoint(clientEntrypoint, reqEntryPoint, remote)
 
 	// now hit that node
 	client := &http.Client{}
@@ -116,4 +104,15 @@ func cpRemoteToLocal(remote string, local string) error {
 	stats, _ := f.Stat()
 	log.Printf("Saved remote file %s to %s \nbytes downloaded: %d \n", remote, f.Name(), stats.Size())
 	return nil
+}
+
+func makeRequestEntrypoint(client *http.Client, req *http.Request, remote string) Node {
+	queryEntryPoint := req.URL.Query()
+	queryEntryPoint.Add("file", strings.Replace(remote, prefix, "", -1))
+	req.URL.RawQuery = queryEntryPoint.Encode()
+	respEntryPoint, _ := client.Do(req)
+	var data Node
+	body, _ := ioutil.ReadAll(respEntryPoint.Body)
+	json.Unmarshal(body, &data)
+	return data
 }
