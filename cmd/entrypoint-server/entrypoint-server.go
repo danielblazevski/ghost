@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"ghost/server/entrypoint"
+	"ghost/pkg/server/entrypoint"
 	"log"
 	"net/http"
 	"os"

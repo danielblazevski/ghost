@@ -1,7 +1,7 @@
 package main
 
 import (
-	"ghost/client"
+	"ghost/pkg/client"
 	"log"
 	"os"
 )

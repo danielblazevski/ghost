@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"ghost/server/storage"
+	"ghost/pkg/server/storage"
 	"log"
 	"net/http"
 	"os"
@@ -15,13 +15,18 @@ func main() {
 	nextService := os.Args[2]
 	nextPort := os.Args[3]
 
+	baseLocation = "/ghost/files"
+
 	log.Println("Starting http file sever")
 
 	http.HandleFunc("/upload", func(w http.ResponseWriter, r *http.Request) {
-		storage.HandleUploadStorage(w, r, nextNodeClient, nextService, nextPort)
+		storage.HandleUploadStorage(w, r, nextNodeClient, nextService, nextPort, baseLocation)
 	})
 
-	http.HandleFunc("/download", storage.HandleDownloadStorage)
+	http.HandleFunc("/download", func(w http.ResponseWriter, r *http.Request) {
+		storage.HandleDownloadStorage(w, r, baseLocation)
+	})
+
 	http.HandleFunc("/status-check", storage.HandleStatusCheck)
 
 	err := http.ListenAndServe(fmt.Sprintf(":%s", port), nil)
