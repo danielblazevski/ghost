@@ -109,7 +109,6 @@ func UpsertVersionFromFilename(writer http.ResponseWriter, fileMainPath string, 
 	return nil, err
 }
 
-// needs to be refactored.  check if file exists, but if condition fails, this does not create the file!!!!!
 func UpdatevVersionFromFilename(writer http.ResponseWriter,
 	fileMainPath string,
 	filename string,
