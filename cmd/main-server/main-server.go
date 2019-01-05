@@ -15,7 +15,7 @@ func main() {
 	nextService := os.Args[2]
 	nextPort := os.Args[3]
 
-	baseLocation = "/ghost/files"
+	baseLocation := "/ghost/files"
 
 	log.Println("Starting http file sever")
 
