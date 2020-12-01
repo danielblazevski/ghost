@@ -11,9 +11,11 @@ import (
 	"syscall"
 )
 
-// methods for threadsafe bookeeping of versions of files
+// methods for bookeeping of versions of files, with some thread safety.
+// when a user uploads 'foo.txt' to 'doge://cloud/bar.txt' the path on the server is
+//  /ghost/files/cloud/bar.txt/#10, where #10 is the version number.  
 
-func makeNewFileVersionZero(writer http.ResponseWriter,
+func makeNewFileVersion(writer http.ResponseWriter,
 	fileMainPath string,
 	filename string,
 	version int) error {
@@ -89,11 +91,11 @@ func UpsertVersionFromFilename(writer http.ResponseWriter, fileMainPath string, 
 		mutex.Lock()
 		if !exists {
 			version := 0
-			makeNewFileVersionZero(writer, fileMainPath, filename, version)
+			makeNewFileVersion(writer, fileMainPath, filename, version)
 			mutex.Unlock()
 			return &version, nil
 		} else {
-			// grab version.  major race condition edge case! Very rare two threads enter here concurrently
+			// grab version.  race conditin edge case
 			// TODO: deal with this.
 		}
 	} else {
@@ -122,16 +124,17 @@ func UpdatevVersionFromFilename(writer http.ResponseWriter,
 
 	if !exists {
 		// Only concurrent threads that make it here will be blocked
+		// TODO: really only need to lock on the file, not this block of code
 		var mutex = &sync.Mutex{}
 		mutex.Lock()
 		if !exists {
 			// make a new file with the input version.  Cannot assume that version is 1
-			makeNewFileVersionZero(writer, fileMainPath, filename, version)
+			makeNewFileVersion(writer, fileMainPath, filename, version)
 			mutex.Unlock()
 			return &version, err
 		} else {
-			// grab version.  major race condition edge case!  Very rare two threads enter here concurrently
-			// TODO: deal with this.
+			// grab version. race condition edge case
+			// TODO: deal with this
 		}
 	} else {
 		// main case (most often, not new file).  grab version and update

@@ -19,6 +19,12 @@ type NextClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+//  when a user uploads 'foo.txt' to 'doge://cloud/bar.txt' the path on the server is
+//  /ghost/files/cloud/bar.txt/#10, where #10 is the version number.
+//  we also make files /ghost/files/cloud/bar.txt/latest-upload-complete and 
+// /ghost/files/cloud/bar.txt/latest-upload-complete to keep track of version numbers to ensure atomic writes and safe deletion 
+// older versions
+
 func HandleUploadStorage(writer http.ResponseWriter,
 	request *http.Request,
 	nextNodeClient NextClient,
