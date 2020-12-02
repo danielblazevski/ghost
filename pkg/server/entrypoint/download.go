@@ -13,6 +13,10 @@ type Status struct {
 	NumGoRoutines int
 }
 
+
+// pings each node storing the file, finds the node that has the least traffic and
+// downloads from there 
+
 func HandleDownload(writer http.ResponseWriter, request *http.Request) {
 	filename := request.URL.Query().Get("file")
 	if filename == "" {
@@ -55,6 +59,8 @@ func HandleDownload(writer http.ResponseWriter, request *http.Request) {
 	writer.Write(js)
 }
 
+// toy stat to get a sense of which storage node is the busiest.  For simplicity, use the number of currently executing
+// goroutines as a proxy for how busy a node is. 
 func getStats(node Node, c chan int) {
 	client := &http.Client{}
 	reqStatus, _ := http.NewRequest("GET", fmt.Sprintf("http://%s:%s/status-check", node.Host, strconv.Itoa(node.Port)), nil)
