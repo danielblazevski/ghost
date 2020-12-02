@@ -11,9 +11,19 @@ import (
 	"syscall"
 )
 
-// methods for bookeeping of versions of files, with some thread safety.
-// when a user uploads 'foo.txt' to 'doge://cloud/bar.txt' the path on the server is
-//  /ghost/files/cloud/bar.txt/#10, where #10 is the version number.  
+/*
+methods for bookeeping of versions of files, with some thread safety.
+when a user uploads 'foo.txt' to 'doge://cloud/bar.txt' the path on the server is
+ /ghost/files/cloud/bar.txt/#10, where #10 is the version number.  
+
+We use 2 files to keep track of the version numbers: 
+
+'/cloud/bar.txt/latest-upload-start' and '/cloud/bar.txt/latest-upload-complete'
+
+This ensures safe deletion of older versions.  Basically using these two 
+files as a hacky way to not need an external service/DB for file metadata :-) 
+
+*/
 
 func makeNewFileVersion(writer http.ResponseWriter,
 	fileMainPath string,
@@ -59,6 +69,10 @@ func makeNewFileVersion(writer http.ResponseWriter,
 	return nil
 }
 
+
+// Reads in one of the two metadata files and gets the version number
+// used in Download.
+
 func ReadVersionFromFilename(writer http.ResponseWriter, fileMainPath string, filename string) (*int, error) {
 	exists, err := exists(fmt.Sprintf("%s/%s", fileMainPath, filename))
 	if err != nil {
@@ -79,8 +93,12 @@ func ReadVersionFromFilename(writer http.ResponseWriter, fileMainPath string, fi
 	return nil, err
 }
 
-// read, creates if empty.
-func UpsertVersionFromFilename(writer http.ResponseWriter, fileMainPath string, filename string) (*int, error) {
+// this method either read in an existing metadata file to modify the version, or 
+// create a new file with version = 0.  This method is used for Uploads.
+// Different method than ReadVersionFromFilename used for Downloads, since we need to create a new file with version 0 for 
+// uploads.
+
+func ReadOrCreateVersionFromFilename(writer http.ResponseWriter, fileMainPath string, filename string) (*int, error) {
 	exists, err := exists(fileMainPath)
 	if err != nil {
 		return nil, err
@@ -111,6 +129,7 @@ func UpsertVersionFromFilename(writer http.ResponseWriter, fileMainPath string, 
 	return nil, err
 }
 
+// updates the metadata file when starting and completing an upload.
 func UpdatevVersionFromFilename(writer http.ResponseWriter,
 	fileMainPath string,
 	filename string,
